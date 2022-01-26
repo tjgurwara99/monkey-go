@@ -1,0 +1,150 @@
+package lexer
+
+import (
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/tjgurwara99/monkey-go/pkg/token"
+)
+
+type lexer struct {
+	start   int
+	pos     int
+	width   int
+	line    int
+	col     int
+	input   string
+	Tokens  chan token.Token
+	prevCol []int
+}
+
+const eof = -1
+
+func Lex(input string) *lexer {
+	l := &lexer{
+		input:  input,
+		Tokens: make(chan token.Token),
+		line:   1,
+	}
+	go l.run()
+	return l
+}
+
+func (l *lexer) run() {
+	for state := lexText; state != nil; {
+		state = state(l)
+	}
+	close(l.Tokens)
+}
+
+func (l *lexer) emit(t token.TokenType) {
+	if t == token.EOF {
+		l.Tokens <- token.Token{
+			Type:    t,
+			Literal: "",
+			Line:    l.line,
+			Pos:     l.pos,
+			Col:     l.col,
+		}
+		return
+	}
+	l.Tokens <- token.Token{
+		Type:    t,
+		Literal: l.input[l.start:l.pos],
+		Line:    l.line,
+		Pos:     l.pos,
+		Col:     l.col,
+	}
+	l.start = l.pos
+}
+
+func (l *lexer) next() rune {
+	if l.pos >= len(l.input) {
+		l.width = 0
+		return eof
+	}
+	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
+	l.width = w
+	l.prevCol = append(l.prevCol, l.col)
+	l.col += l.width
+	l.pos += l.width
+	if r == '\n' {
+		l.line++
+		l.col = 0
+	}
+	return r
+}
+
+func (l *lexer) peek() rune {
+	r := l.next()
+	l.backup()
+	return r
+}
+
+func (l *lexer) backup() {
+	l.pos -= l.width
+	l.col = l.prevCol[len(l.prevCol)-1]
+	l.prevCol = l.prevCol[:len(l.prevCol)-1]
+	if l.width == 1 && l.input[l.pos] == '\n' {
+		l.line--
+	}
+}
+
+func (l *lexer) ignore() {
+	l.start = l.pos
+}
+
+type stateFn func(*lexer) stateFn
+
+func lexText(l *lexer) stateFn {
+	switch r := l.next(); {
+	case r == '\n' || r == ' ' || r == '\t' || r == '\r':
+		l.ignore()
+	case r == '=':
+		l.emit(token.ASSIGN)
+	case r == '+':
+		l.emit(token.PLUS)
+	case r == '-':
+		l.emit(token.MINUS)
+	case r == ',':
+		l.emit(token.COMMA)
+	case r == ';':
+		l.emit(token.SEMICOLON)
+	case r == '(':
+		l.emit(token.LPAREN)
+	case r == ')':
+		l.emit(token.RPAREN)
+	case r == '{':
+		l.emit(token.LBRACE)
+	case r == '}':
+		l.emit(token.RBRACE)
+	case isIdent(r):
+		l.backup()
+		return lexIdent
+	case r == eof:
+		l.pos += 1
+		l.col += 1
+		l.emit(token.EOF)
+		return nil
+	}
+	return lexText
+}
+
+func isIdent(r rune) bool {
+	return r == '_' || unicode.IsDigit(r) || unicode.IsLetter(r)
+}
+
+func lexIdent(l *lexer) stateFn {
+Loop:
+	for {
+		switch r := l.next(); {
+		case isIdent(r):
+			// absorb
+		default:
+			l.backup()
+			l.emit(token.IDENT)
+			break Loop
+		}
+	}
+	return lexText
+}
