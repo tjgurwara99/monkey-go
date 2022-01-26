@@ -44,7 +44,7 @@ func (l *lexer) emit(t token.TokenType) {
 			Literal: "",
 			Line:    l.line,
 			Pos:     l.pos,
-			Col:     l.col,
+			Col:     l.col + (l.pos - l.start),
 		}
 		return
 	}
@@ -52,8 +52,8 @@ func (l *lexer) emit(t token.TokenType) {
 		Type:    t,
 		Literal: l.input[l.start:l.pos],
 		Line:    l.line,
-		Pos:     l.pos,
-		Col:     l.col,
+		Pos:     l.start,
+		Col:     l.col - (l.pos - l.start),
 	}
 	l.start = l.pos
 }
@@ -61,6 +61,10 @@ func (l *lexer) emit(t token.TokenType) {
 func (l *lexer) next() rune {
 	if l.pos >= len(l.input) {
 		l.width = 0
+		if l.col == 0 {
+			l.col = l.prevCol[len(l.prevCol)-1]
+			l.line -= 1
+		}
 		return eof
 	}
 	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
@@ -75,6 +79,8 @@ func (l *lexer) next() rune {
 	return r
 }
 
+// peek is usually supposed to be used for double character operators.
+// Current syntax of Monkey doesn't have these double character operators yet.
 func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
@@ -106,6 +112,16 @@ func lexText(l *lexer) stateFn {
 		l.emit(token.PLUS)
 	case r == '-':
 		l.emit(token.MINUS)
+	case r == '!':
+		l.emit(token.BANG)
+	case r == '*':
+		l.emit(token.ASTERISK)
+	case r == '/':
+		l.emit(token.SLASH)
+	case r == '<':
+		l.emit(token.LT)
+	case r == '>':
+		l.emit(token.GT)
 	case r == ',':
 		l.emit(token.COMMA)
 	case r == ';':
@@ -142,7 +158,7 @@ Loop:
 			// absorb
 		default:
 			l.backup()
-			l.emit(token.IDENT)
+			l.emit(token.LookupIdent(l.input[l.start:l.pos]))
 			break Loop
 		}
 	}

@@ -28,9 +28,15 @@ const (
 
 	// Operators
 	operator_beggining
-	ASSIGN // =
-	PLUS   // +
-	MINUS  // -
+	ASSIGN   // =
+	PLUS     // +
+	MINUS    // -
+	BANG     // !
+	ASTERISK // *
+	SLASH    // /
+
+	LT // <
+	GT // >
 
 	// Delimiters
 	COMMA     // ,
@@ -61,9 +67,15 @@ var tokens = [...]string{
 	IDENT: "IDENT",
 	INT:   "INT",
 
-	ASSIGN: "=",
-	PLUS:   "+",
-	MINUS:  "-",
+	ASSIGN:   "=",
+	PLUS:     "+",
+	MINUS:    "-",
+	BANG:     "!",
+	ASTERISK: "*",
+	SLASH:    "/",
+
+	LT: "<",
+	GT: ">",
 
 	COMMA:     ",",
 	SEMICOLON: ";",
@@ -125,4 +137,11 @@ func IsIdentifier(name string) bool {
 		}
 	}
 	return name != "" && !IsKeyword(name)
+}
+
+func LookupIdent(name string) TokenType {
+	if tok, ok := keywords[name]; ok {
+		return tok
+	}
+	return IDENT
 }
