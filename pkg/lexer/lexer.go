@@ -102,26 +102,35 @@ func (l *lexer) ignore() {
 
 type stateFn func(*lexer) stateFn
 
+func (l *lexer) doubleCharOperator(secondChar rune, failToken token.TokenType, passToken token.TokenType) token.TokenType {
+	ch := l.peek()
+	if ch == secondChar {
+		l.next()
+		return passToken
+	}
+	return failToken
+}
+
 func lexText(l *lexer) stateFn {
 	switch r := l.next(); {
 	case r == '\n' || r == ' ' || r == '\t' || r == '\r':
 		l.ignore()
 	case r == '=':
-		l.emit(token.ASSIGN)
+		l.emit(l.doubleCharOperator('=', token.ASSIGN, token.EQ))
 	case r == '+':
 		l.emit(token.PLUS)
 	case r == '-':
 		l.emit(token.MINUS)
 	case r == '!':
-		l.emit(token.BANG)
+		l.emit(l.doubleCharOperator('=', token.NOT_LEQ, token.BANG))
 	case r == '*':
 		l.emit(token.ASTERISK)
 	case r == '/':
 		l.emit(token.SLASH)
 	case r == '<':
-		l.emit(token.LT)
+		l.emit(l.doubleCharOperator('=', token.LT, token.LTEQ))
 	case r == '>':
-		l.emit(token.GT)
+		l.emit(l.doubleCharOperator('=', token.GT, token.GTEQ))
 	case r == ',':
 		l.emit(token.COMMA)
 	case r == ';':
@@ -134,6 +143,10 @@ func lexText(l *lexer) stateFn {
 		l.emit(token.LBRACE)
 	case r == '}':
 		l.emit(token.RBRACE)
+	case r == '|':
+		l.emit(l.doubleCharOperator('|', token.OR, token.ILLEGAL))
+	case r == '&':
+		l.emit(l.doubleCharOperator('&', token.AND, token.ILLEGAL))
 	case isIdent(r):
 		l.backup()
 		return lexIdent

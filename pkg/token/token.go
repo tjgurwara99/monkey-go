@@ -46,6 +46,15 @@ const (
 	RPAREN // )
 	LBRACE // {
 	RBRACE // }
+
+	// logical
+	AND
+	OR
+	EQ
+	NOT_LEQ
+	LTEQ
+	GTEQ
+
 	operator_end
 
 	// Keywords
@@ -84,6 +93,13 @@ var tokens = [...]string{
 	RPAREN: ")",
 	LBRACE: "{",
 	RBRACE: "}",
+
+	OR:      "||",
+	AND:     "&&",
+	EQ:      "==",
+	NOT_LEQ: "!=",
+	LTEQ:    "<=",
+	GTEQ:    ">=",
 
 	FUNCTION: "fn",
 	LET:      "let",
