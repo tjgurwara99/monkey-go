@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/tjgurwara99/monkey-go/pkg/ast"
 	"github.com/tjgurwara99/monkey-go/pkg/lexer"
 	"github.com/tjgurwara99/monkey-go/pkg/token"
@@ -11,10 +13,19 @@ type Parser struct {
 
 	current token.Token
 	peek    token.Token
+
+	errors []string
 }
 
 func New(l *lexer.Lexer) *Parser {
-	return &Parser{l: l}
+	return &Parser{
+		l:      l,
+		errors: []string{},
+	}
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
 }
 
 func (p *Parser) nextToken() {
@@ -82,11 +93,17 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peek.Type == t
 }
 
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peek.Type)
+	p.errors = append(p.errors, msg)
+}
+
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
 	}
 
+	p.peekError(t)
 	return false
 }
