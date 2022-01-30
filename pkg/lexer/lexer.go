@@ -122,7 +122,7 @@ func lexText(l *Lexer) stateFn {
 	case r == '-':
 		l.emit(token.MINUS)
 	case r == '!':
-		l.emit(l.doubleCharOperator('=', token.NOT_LEQ, token.BANG))
+		l.emit(l.doubleCharOperator('=', token.BANG, token.NOT_LEQ))
 	case r == '*':
 		l.emit(token.ASTERISK)
 	case r == '/':
