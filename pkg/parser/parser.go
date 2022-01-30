@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/tjgurwara99/monkey-go/pkg/ast"
-	"github.com/tjgurwara99/monkey-go/pkg/lexer"
 	"github.com/tjgurwara99/monkey-go/pkg/token"
 )
 
 type Parser struct {
-	l *lexer.Lexer
+	tokens chan token.Token
 
 	current token.Token
 	peek    token.Token
@@ -17,9 +16,9 @@ type Parser struct {
 	errors []string
 }
 
-func New(l *lexer.Lexer) *Parser {
+func New(t chan token.Token) *Parser {
 	return &Parser{
-		l:      l,
+		tokens: t,
 		errors: []string{},
 	}
 }
@@ -30,7 +29,7 @@ func (p *Parser) Errors() []string {
 
 func (p *Parser) nextToken() {
 	p.current = p.peek
-	p.peek = <-p.l.Tokens
+	p.peek = <-p.tokens
 }
 
 func (p *Parser) ParseProgram() *ast.Program {

@@ -15,7 +15,7 @@ func TestLetStatements(t *testing.T) {
 	`
 
 	l := lexer.Lex(input)
-	p := New(l)
+	p := New(l.Tokens)
 
 	program := p.ParseProgram()
 	checkParserErrors(t, p)

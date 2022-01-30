@@ -7,7 +7,7 @@ import (
 	"github.com/tjgurwara99/monkey-go/pkg/token"
 )
 
-type Lexer struct {
+type lexer struct {
 	start   int
 	pos     int
 	width   int
@@ -20,8 +20,8 @@ type Lexer struct {
 
 const eof = -1
 
-func Lex(input string) *Lexer {
-	l := &Lexer{
+func Lex(input string) *lexer {
+	l := &lexer{
 		input:  input,
 		Tokens: make(chan token.Token),
 		line:   1,
@@ -30,14 +30,14 @@ func Lex(input string) *Lexer {
 	return l
 }
 
-func (l *Lexer) run() {
+func (l *lexer) run() {
 	for state := lexText; state != nil; {
 		state = state(l)
 	}
 	close(l.Tokens)
 }
 
-func (l *Lexer) emit(t token.TokenType) {
+func (l *lexer) emit(t token.TokenType) {
 	if t == token.EOF {
 		l.Tokens <- token.Token{
 			Type:    t,
@@ -58,7 +58,7 @@ func (l *Lexer) emit(t token.TokenType) {
 	l.start = l.pos
 }
 
-func (l *Lexer) next() rune {
+func (l *lexer) next() rune {
 	if l.pos >= len(l.input) {
 		l.width = 0
 		if l.col == 0 {
@@ -81,13 +81,13 @@ func (l *Lexer) next() rune {
 
 // peek is usually supposed to be used for double character operators.
 // Current syntax of Monkey doesn't have these double character operators yet.
-func (l *Lexer) peek() rune {
+func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
 	return r
 }
 
-func (l *Lexer) backup() {
+func (l *lexer) backup() {
 	l.pos -= l.width
 	l.col = l.prevCol[len(l.prevCol)-1]
 	l.prevCol = l.prevCol[:len(l.prevCol)-1]
@@ -96,13 +96,13 @@ func (l *Lexer) backup() {
 	}
 }
 
-func (l *Lexer) ignore() {
+func (l *lexer) ignore() {
 	l.start = l.pos
 }
 
-type stateFn func(*Lexer) stateFn
+type stateFn func(*lexer) stateFn
 
-func (l *Lexer) doubleCharOperator(secondChar rune, failToken token.TokenType, passToken token.TokenType) token.TokenType {
+func (l *lexer) doubleCharOperator(secondChar rune, failToken token.TokenType, passToken token.TokenType) token.TokenType {
 	ch := l.peek()
 	if ch == secondChar {
 		l.next()
@@ -111,7 +111,7 @@ func (l *Lexer) doubleCharOperator(secondChar rune, failToken token.TokenType, p
 	return failToken
 }
 
-func lexText(l *Lexer) stateFn {
+func lexText(l *lexer) stateFn {
 	switch r := l.next(); {
 	case r == '\n' || r == ' ' || r == '\t' || r == '\r':
 		l.ignore()
@@ -163,7 +163,7 @@ func isIdent(r rune) bool {
 	return r == '_' || unicode.IsDigit(r) || unicode.IsLetter(r)
 }
 
-func lexIdent(l *Lexer) stateFn {
+func lexIdent(l *lexer) stateFn {
 Loop:
 	for {
 		switch r := l.next(); {
