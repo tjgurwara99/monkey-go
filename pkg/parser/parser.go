@@ -13,8 +13,13 @@ type Parser struct {
 	peek    token.Token
 }
 
+func New(l *lexer.Lexer) *Parser {
+	return &Parser{l: l}
+}
+
 func (p *Parser) nextToken() {
-	p.current = <-p.l.Tokens
+	p.current = p.peek
+	p.peek = <-p.l.Tokens
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -22,7 +27,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 		Statements: []ast.Statement{},
 	}
 
-	for p.currentIs(token.EOF) {
+	for !p.currentIs(token.EOF) {
 		stmt := p.ParseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
@@ -30,6 +35,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 		p.nextToken()
 	}
+
 	return program
 }
 
