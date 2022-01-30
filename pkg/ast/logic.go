@@ -29,6 +29,7 @@ func (l *LetStatement) TokenLiteral() string {
 
 type Identifier struct {
 	Token token.Token
+	Value string
 }
 
 var _ Expression = (*Identifier)(nil) // compile time interface compliance check same as above
