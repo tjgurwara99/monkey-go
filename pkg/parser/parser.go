@@ -7,32 +7,32 @@ import (
 	"github.com/tjgurwara99/monkey-go/pkg/token"
 )
 
-type Parser struct {
+type parser struct {
 	tokens chan token.Token
 
 	current token.Token
 	peek    token.Token
 
-	errors []string
+	errors []error
 }
 
-func New(t chan token.Token) *Parser {
-	return &Parser{
+func New(t chan token.Token) *parser {
+	return &parser{
 		tokens: t,
-		errors: []string{},
+		errors: []error{},
 	}
 }
 
-func (p *Parser) Errors() []string {
+func (p *parser) Errors() []error {
 	return p.errors
 }
 
-func (p *Parser) nextToken() {
+func (p *parser) nextToken() {
 	p.current = p.peek
 	p.peek = <-p.tokens
 }
 
-func (p *Parser) ParseProgram() *ast.Program {
+func (p *parser) ParseProgram() *ast.Program {
 	program := &ast.Program{
 		Statements: []ast.Statement{},
 	}
@@ -49,7 +49,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
-func (p *Parser) ParseStatement() ast.Statement {
+func (p *parser) ParseStatement() ast.Statement {
 	switch p.current.Type {
 	case token.LET:
 		return p.ParseLetStatement()
@@ -58,7 +58,7 @@ func (p *Parser) ParseStatement() ast.Statement {
 	}
 }
 
-func (p *Parser) ParseLetStatement() *ast.LetStatement {
+func (p *parser) ParseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.current}
 
 	if !p.expectPeek(token.IDENT) {
@@ -82,22 +82,22 @@ func (p *Parser) ParseLetStatement() *ast.LetStatement {
 	return stmt
 }
 
-// func (p *Parser) ParseExpression() ast.Expression {}
+// func (p *parser) ParseExpression() ast.Expression {}
 
-func (p *Parser) currentIs(t token.TokenType) bool {
+func (p *parser) currentIs(t token.TokenType) bool {
 	return p.current.Type == t
 }
 
-func (p *Parser) peekTokenIs(t token.TokenType) bool {
+func (p *parser) peekTokenIs(t token.TokenType) bool {
 	return p.peek.Type == t
 }
 
-func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peek.Type)
+func (p *parser) peekError(t token.TokenType) {
+	msg := fmt.Errorf("expected next token to be %s, got %s instead", t, p.peek.Type)
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) expectPeek(t token.TokenType) bool {
+func (p *parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true

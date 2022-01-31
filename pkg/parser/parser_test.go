@@ -1,10 +1,11 @@
-package parser
+package parser_test
 
 import (
 	"testing"
 
 	"github.com/tjgurwara99/monkey-go/pkg/ast"
 	"github.com/tjgurwara99/monkey-go/pkg/lexer"
+	"github.com/tjgurwara99/monkey-go/pkg/parser"
 )
 
 func TestLetStatements(t *testing.T) {
@@ -15,10 +16,10 @@ func TestLetStatements(t *testing.T) {
 	`
 
 	l := lexer.Lex(input)
-	p := New(l.Tokens)
+	p := parser.New(l.Tokens)
 
 	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	checkErrors(t, p.Errors())
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -71,8 +72,7 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 	return true
 }
 
-func checkParserErrors(t *testing.T, p *Parser) {
-	errors := p.Errors()
+func checkErrors(t *testing.T, errors []error) {
 	if len(errors) == 0 {
 		return
 	}
