@@ -20,7 +20,7 @@ type lexer struct {
 
 const eof = -1
 
-func Lex(input string) *lexer {
+func New(input string) *lexer {
 	l := &lexer{
 		input:  input,
 		Tokens: make(chan token.Token),
