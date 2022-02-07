@@ -20,7 +20,7 @@ type lexer struct {
 
 const eof = -1
 
-func Lex(input string) *lexer {
+func New(input string) *lexer {
 	l := &lexer{
 		input:  input,
 		Tokens: make(chan token.Token),
@@ -122,7 +122,7 @@ func lexText(l *lexer) stateFn {
 	case r == '-':
 		l.emit(token.MINUS)
 	case r == '!':
-		l.emit(l.doubleCharOperator('=', token.NOT_LEQ, token.BANG))
+		l.emit(l.doubleCharOperator('=', token.BANG, token.NOT_LEQ))
 	case r == '*':
 		l.emit(token.ASTERISK)
 	case r == '/':
