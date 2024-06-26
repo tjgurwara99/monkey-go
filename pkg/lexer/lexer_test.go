@@ -41,7 +41,7 @@ return
 		{token.EOF, "", 2, 46, 8},
 	}
 
-	lexed := lexer.Lex(input)
+	lexed := lexer.New(input)
 	index := 0
 	for token := range lexed.Tokens {
 		if token.Type != tests[index].expectedType {
